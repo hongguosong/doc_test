@@ -151,6 +151,9 @@ class DemoApplicationTests {
 
     @Test
     void test2() throws IOException, InvalidFormatException {
+
+        //--------------所有文档正文都不能有首行缩进，不然表格就有缩进------------------------
+        //-----------------------------------------------------------------------------
         //整个模板数据
         WordData data = new WordData();
 
@@ -173,12 +176,18 @@ class DemoApplicationTests {
         segmentsResult.add(s1);
         segmentsResult.add(s2);
 
-        DocxRenderData segment = new DocxRenderData(new File(pathRoot+"/segmentResult.docx"), segmentsResult );
+        DocxRenderData segment = new DocxRenderData(new File(pathRoot+"/segmentResult10.docx"), segmentsResult );
         data.setSegmentResult(segment);
 
         Style tableHeaderStyle = new Style();
         tableHeaderStyle.setBold(true);
+        tableHeaderStyle.setFontSize(10);
         tableHeaderStyle.setColor("000000");
+
+        Style tableRowStyle = new Style();
+        tableRowStyle.setFontSize(10);
+        tableRowStyle.setColor("000000");
+
         //tcf_function table
         TableData tcfFunctionData = new TableData();
         tcfFunctionData.setHeader(new RowRenderData(
@@ -193,13 +202,22 @@ class DemoApplicationTests {
         List<RowRenderData> tcfFunctionTableData = new ArrayList<>();
         for(int i=0; i<4;i++){
             Integer num = i+1;
-            RowRenderData row = RowRenderData.build(num.toString(), "ASP.READ", "XXXX", "100%", "100%", "正确", "无缺陷");
+            //RowRenderData row = RowRenderData.build(num.toString(), "ASP.READ", "XXXX", "100%", "100%", "正确", "无缺陷");
+            RowRenderData row = new RowRenderData(
+                    Arrays.asList(new TextRenderData(num.toString(), tableRowStyle),
+                            new TextRenderData("ASP.READ", tableRowStyle),
+                            new TextRenderData( "XXXX", tableRowStyle),
+                            new TextRenderData("100%", tableRowStyle),
+                            new TextRenderData( "100%", tableRowStyle),
+                            new TextRenderData( "正确", tableRowStyle),
+                            new TextRenderData("无缺陷", tableRowStyle)),
+                    "FFFFFF");
             tcfFunctionTableData.add(row);
         }
         tcfFunctionData.setTableDatas(tcfFunctionTableData);
         MiniTableRenderData tcfTable = new MiniTableRenderData(tcfFunctionData.getHeader(), tcfFunctionData.getTableDatas(), 15.19F);
         TableStyle tcfTableStyle = new TableStyle();
-        tcfTableStyle.setAlign(STJc.RIGHT);
+        tcfTableStyle.setAlign(STJc.LEFT);
         tcfTable.setStyle(tcfTableStyle);
         data.setTcfFunction(tcfTable);
 
@@ -217,7 +235,16 @@ class DemoApplicationTests {
         List<RowRenderData> staticFunctionTableData = new ArrayList<>();
         for(int i=0; i<4;i++){
             Integer num = i+1;
-            RowRenderData row = RowRenderData.build(num.toString(), "ASP.READ", "XXXX", "100%", "100%", "正确", "无缺陷");
+            //RowRenderData row = RowRenderData.build(num.toString(), "ASP.READ", "XXXX", "100%", "100%", "正确", "无缺陷");
+            RowRenderData row = new RowRenderData(
+                    Arrays.asList(new TextRenderData(num.toString(), tableRowStyle),
+                            new TextRenderData("ASP.READ", tableRowStyle),
+                            new TextRenderData( "XXXX", tableRowStyle),
+                            new TextRenderData("100%", tableRowStyle),
+                            new TextRenderData( "100%", tableRowStyle),
+                            new TextRenderData( "正确", tableRowStyle),
+                            new TextRenderData("无缺陷", tableRowStyle)),
+                    "FFFFFF");
             staticFunctionTableData.add(row);
         }
         staticFunctionData.setTableDatas(staticFunctionTableData);
@@ -225,7 +252,7 @@ class DemoApplicationTests {
 
         XWPFTemplate template = XWPFTemplate.compile(pathRoot+"/muban2.docx").render(data);
 
-        FileOutputStream out = new FileOutputStream(pathRoot+"/out_story.docx");
+        FileOutputStream out = new FileOutputStream(pathRoot+"/out_story2.docx");
         template.write(out);
         out.flush();
         out.close();
