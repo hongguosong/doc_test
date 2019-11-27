@@ -1,17 +1,27 @@
 package com.example.demo;
 
 import com.deepoove.poi.XWPFTemplate;
+import com.deepoove.poi.data.DocxRenderData;
+import com.deepoove.poi.data.MiniTableRenderData;
+import com.deepoove.poi.data.RowRenderData;
+import com.deepoove.poi.data.TextRenderData;
+import com.deepoove.poi.data.style.Style;
+import com.deepoove.poi.data.style.TableStyle;
+
+import com.example.demo.word.SegmentResultData;
+import com.example.demo.word.TableData;
+import com.example.demo.word.WordData;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.util.Units;
 import org.apache.poi.xwpf.usermodel.*;
 import org.junit.jupiter.api.Test;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.STJc;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -20,9 +30,10 @@ class DemoApplicationTests {
 
     @Value("${doc}")
     private String pathRoot;
+
     @Test
     void contextLoads() throws IOException, InvalidFormatException {
-        XWPFDocument doc = new XWPFDocument(new FileInputStream(pathRoot+"/test.docx"));
+        XWPFDocument doc = new XWPFDocument(new FileInputStream(pathRoot+"/story.docx"));
         // 段落
         List<XWPFParagraph> paragraphs = doc.getParagraphs();
 // 表格
@@ -107,10 +118,117 @@ class DemoApplicationTests {
         }
 
     }
+
     void test() throws IOException{
         //核心API采用了极简设计，只需要一行代码
         XWPFTemplate.compile("template.docx").render(new HashMap<String, Object>(){{
             put("title", "Poi-tl 模板引擎");
         }}).writeToFile("out_template.docx");
+    }
+
+    @Test
+    void test3() throws IOException{
+        //RowRenderData header = RowRenderData.build(new TextRenderData("000000", "姓名"), new TextRenderData("000000", "学历"));
+
+        RowRenderData header = new RowRenderData(
+                Arrays.asList(new TextRenderData("000000", "姓名"), new TextRenderData("000000", "学历")
+                ),"ff9800");
+
+        RowRenderData row0 = RowRenderData.build("张三", "研究生");
+        RowRenderData row1 = RowRenderData.build("李四", "博士");
+        RowRenderData row2 = RowRenderData.build("王五", "博士后");
+
+        XWPFTemplate template = XWPFTemplate.compile(pathRoot+"/template.docx").render(new HashMap<String, Object>(){{
+            put("table", new MiniTableRenderData(header, Arrays.asList(row0, row1, row2)));
+        }});
+        FileOutputStream out = new FileOutputStream(pathRoot+"/out_template.docx");
+        template.write(out);
+        out.flush();
+        out.close();
+        template.close();
+
+    }
+
+    @Test
+    void test2() throws IOException, InvalidFormatException {
+        //整个模板数据
+        WordData data = new WordData();
+
+        //动态分析结果
+        List<SegmentResultData> segmentsResult = new ArrayList<SegmentResultData>();
+        SegmentResultData s1 = new SegmentResultData();
+        s1.setFunction("ASP.READ");
+        s1.setTestcase("SDFTK_U1");
+        s1.setInput("输入测试说明1");
+        s1.setOutput("输出测试说明1");
+        s1.setBranch("25%");
+        s1.setStatement("56%");
+        SegmentResultData s2 = new SegmentResultData();
+        s2.setFunction("ASP.WRITE");
+        s2.setTestcase("SDFTK_U2");
+        s2.setInput("输入测试说明2");
+        s2.setOutput("输出测试说明2");
+        s2.setBranch("78%");
+        s2.setStatement("90%");
+        segmentsResult.add(s1);
+        segmentsResult.add(s2);
+
+        DocxRenderData segment = new DocxRenderData(new File(pathRoot+"/segmentResult.docx"), segmentsResult );
+        data.setSegmentResult(segment);
+
+        Style tableHeaderStyle = new Style();
+        tableHeaderStyle.setBold(true);
+        tableHeaderStyle.setColor("000000");
+        //tcf_function table
+        TableData tcfFunctionData = new TableData();
+        tcfFunctionData.setHeader(new RowRenderData(
+                Arrays.asList(new TextRenderData("序号", tableHeaderStyle),
+                        new TextRenderData("被测模块", tableHeaderStyle),
+                        new TextRenderData( "测试用例编号", tableHeaderStyle),
+                        new TextRenderData("语句覆盖率", tableHeaderStyle),
+                        new TextRenderData( "分支覆盖率", tableHeaderStyle),
+                        new TextRenderData( "测试结论", tableHeaderStyle),
+                        new TextRenderData("缺陷分析", tableHeaderStyle)),
+                "FFFFFF"));
+        List<RowRenderData> tcfFunctionTableData = new ArrayList<>();
+        for(int i=0; i<4;i++){
+            Integer num = i+1;
+            RowRenderData row = RowRenderData.build(num.toString(), "ASP.READ", "XXXX", "100%", "100%", "正确", "无缺陷");
+            tcfFunctionTableData.add(row);
+        }
+        tcfFunctionData.setTableDatas(tcfFunctionTableData);
+        MiniTableRenderData tcfTable = new MiniTableRenderData(tcfFunctionData.getHeader(), tcfFunctionData.getTableDatas(), 15.19F);
+        TableStyle tcfTableStyle = new TableStyle();
+        tcfTableStyle.setAlign(STJc.RIGHT);
+        tcfTable.setStyle(tcfTableStyle);
+        data.setTcfFunction(tcfTable);
+
+        //static_function table
+        TableData staticFunctionData = new TableData();
+        staticFunctionData.setHeader(new RowRenderData(
+                Arrays.asList(new TextRenderData("序号", tableHeaderStyle),
+                        new TextRenderData("被测模块", tableHeaderStyle),
+                        new TextRenderData("测试用例编号", tableHeaderStyle),
+                        new TextRenderData( "语句覆盖率", tableHeaderStyle),
+                        new TextRenderData("分支覆盖率", tableHeaderStyle),
+                        new TextRenderData("测试结论", tableHeaderStyle),
+                        new TextRenderData("缺陷分析", tableHeaderStyle)),
+                "FFFFFF"));
+        List<RowRenderData> staticFunctionTableData = new ArrayList<>();
+        for(int i=0; i<4;i++){
+            Integer num = i+1;
+            RowRenderData row = RowRenderData.build(num.toString(), "ASP.READ", "XXXX", "100%", "100%", "正确", "无缺陷");
+            staticFunctionTableData.add(row);
+        }
+        staticFunctionData.setTableDatas(staticFunctionTableData);
+        data.setStaticFunction(new MiniTableRenderData(staticFunctionData.getHeader(), staticFunctionData.getTableDatas(), 15.19F));
+
+        XWPFTemplate template = XWPFTemplate.compile(pathRoot+"/muban2.docx").render(data);
+
+        FileOutputStream out = new FileOutputStream(pathRoot+"/out_story.docx");
+        template.write(out);
+        out.flush();
+        out.close();
+        template.close();
     }
 }
