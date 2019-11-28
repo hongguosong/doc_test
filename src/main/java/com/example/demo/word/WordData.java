@@ -15,27 +15,17 @@ import com.deepoove.poi.data.MiniTableRenderData;
 
 public class WordData {
 
-    @Name("story_name")
-    private String storyName;
-    @Name("story_author")
-    private String storyAuthor;
     @Name("tcf_function")
     private MiniTableRenderData tcfFunction;
     @Name("static_function")
     private MiniTableRenderData staticFunction;
     @Name("segment_result")
     private DocxRenderData segmentResult;
-    @Name("story_source")
-    private String storySource;
-    private String summary;
+    @Name("segment_picture")
+    private DocxRenderData segmentPicture;
+    @Name("segment_problem")
+    private DocxRenderData segmentProblem;
 
-    public String getSummary() {
-        return summary;
-    }
-
-    public void setSummary(String summary) {
-        this.summary = summary;
-    }
 
     public DocxRenderData getSegmentResult() {
         return segmentResult;
@@ -61,29 +51,20 @@ public class WordData {
         this.segmentResult = segmentResult;
     }
 
-    public String getStoryName() {
-        return storyName;
+    public DocxRenderData getSegmentPicture() {
+        return segmentPicture;
     }
 
-    public void setStoryName(String storyName) {
-        this.storyName = storyName;
+    public void setSegmentPicture(DocxRenderData segmentPicture) {
+        this.segmentPicture = segmentPicture;
     }
 
-    public String getStoryAuthor() {
-        return storyAuthor;
+    public DocxRenderData getSegmentProblem() {
+        return segmentProblem;
     }
 
-    public void setStoryAuthor(String storyAuthor) {
-        this.storyAuthor = storyAuthor;
+    public void setSegmentProblem(DocxRenderData segmentProblem) {
+        this.segmentProblem = segmentProblem;
     }
-
-    public String getStorySource() {
-        return storySource;
-    }
-
-    public void setStorySource(String storySource) {
-        this.storySource = storySource;
-    }
-
 }
 

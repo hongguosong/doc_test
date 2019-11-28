@@ -1,21 +1,24 @@
 package com.example.demo;
 
 import com.deepoove.poi.XWPFTemplate;
-import com.deepoove.poi.data.DocxRenderData;
-import com.deepoove.poi.data.MiniTableRenderData;
-import com.deepoove.poi.data.RowRenderData;
-import com.deepoove.poi.data.TextRenderData;
+import com.deepoove.poi.config.Configure;
+import com.deepoove.poi.data.*;
 import com.deepoove.poi.data.style.Style;
 import com.deepoove.poi.data.style.TableStyle;
 
-import com.example.demo.word.SegmentResultData;
-import com.example.demo.word.TableData;
-import com.example.demo.word.WordData;
+import com.example.demo.word.*;
+import com.spire.doc.Document;
+import com.spire.doc.FileFormat;
+import com.spire.doc.collections.ParagraphCollection;
+import com.spire.doc.documents.Paragraph;
+import com.spire.doc.fields.TableOfContent;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.util.Units;
 import org.apache.poi.xwpf.usermodel.*;
 import org.junit.jupiter.api.Test;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSimpleField;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STJc;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.STOnOff;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 
@@ -154,13 +157,14 @@ class DemoApplicationTests {
 
         //--------------所有文档正文都不能有首行缩进，不然表格就有缩进------------------------
         //-----------------------------------------------------------------------------
+        //word复选框，有钩☑，无钩口, 方框字号18，打钩的12一样大
         //整个模板数据
         WordData data = new WordData();
-
         //动态分析结果
-        List<SegmentResultData> segmentsResult = new ArrayList<SegmentResultData>();
+        List<SegmentResultData> segmentsResultDataList = new ArrayList<SegmentResultData>();
         SegmentResultData s1 = new SegmentResultData();
         s1.setFunction("ASP.READ");
+        //s1.setFunction("☑口□□");
         s1.setTestcase("SDFTK_U1");
         s1.setInput("输入测试说明1");
         s1.setOutput("输出测试说明1");
@@ -173,11 +177,19 @@ class DemoApplicationTests {
         s2.setOutput("输出测试说明2");
         s2.setBranch("78%");
         s2.setStatement("90%");
-        segmentsResult.add(s1);
-        segmentsResult.add(s2);
+        SegmentResultData s3 = new SegmentResultData();
+        s3.setFunction("ASP.INIT");
+        s3.setTestcase("SDFTK_U3");
+        s3.setInput("输入测试说明3");
+        s3.setOutput("输出测试说明3");
+        s3.setBranch("98%");
+        s3.setStatement("100%");
+        segmentsResultDataList.add(s1);
+        segmentsResultDataList.add(s2);
+        segmentsResultDataList.add(s3);
 
-        DocxRenderData segment = new DocxRenderData(new File(pathRoot+"/segmentResult10.docx"), segmentsResult );
-        data.setSegmentResult(segment);
+        DocxRenderData segmentResult = new DocxRenderData(new File(pathRoot+"/segmentResult11.docx"), segmentsResultDataList );
+        data.setSegmentResult(segmentResult);
 
         Style tableHeaderStyle = new Style();
         tableHeaderStyle.setBold(true);
@@ -226,7 +238,6 @@ class DemoApplicationTests {
         staticFunctionData.setHeader(new RowRenderData(
                 Arrays.asList(new TextRenderData("序号", tableHeaderStyle),
                         new TextRenderData("被测模块", tableHeaderStyle),
-                        new TextRenderData("测试用例编号", tableHeaderStyle),
                         new TextRenderData( "语句覆盖率", tableHeaderStyle),
                         new TextRenderData("分支覆盖率", tableHeaderStyle),
                         new TextRenderData("测试结论", tableHeaderStyle),
@@ -239,7 +250,6 @@ class DemoApplicationTests {
             RowRenderData row = new RowRenderData(
                     Arrays.asList(new TextRenderData(num.toString(), tableRowStyle),
                             new TextRenderData("ASP.READ", tableRowStyle),
-                            new TextRenderData( "XXXX", tableRowStyle),
                             new TextRenderData("100%", tableRowStyle),
                             new TextRenderData( "100%", tableRowStyle),
                             new TextRenderData( "正确", tableRowStyle),
@@ -250,12 +260,119 @@ class DemoApplicationTests {
         staticFunctionData.setTableDatas(staticFunctionTableData);
         data.setStaticFunction(new MiniTableRenderData(staticFunctionData.getHeader(), staticFunctionData.getTableDatas(), 15.19F));
 
-        XWPFTemplate template = XWPFTemplate.compile(pathRoot+"/muban2.docx").render(data);
+        //截图文件
+        List<SegmentPictureData> segmentPictureDataList = new ArrayList<>();
+        for(int i=0; i<3; i++){
+            SegmentPictureData s10 = new SegmentPictureData();
+            if(i==0){
+                s10.setFunction("ASP.READ");
+            }else if(i==1){
+                s10.setFunction("ASP.WRITE");
+            }else if(i==2){
+                s10.setFunction("ASP.INIT");
+            }
+            s10.setTestcase(new PictureRenderData(600,60,pathRoot+"/Case_ReadCom.png"));
+            s10.setStatement(new PictureRenderData(600,75,pathRoot+"/Statement_ReadCom.png"));
+            s10.setBranch(new PictureRenderData(600,75,pathRoot+"/Branch_ReadCom.png"));
+            segmentPictureDataList.add(s10);
+        }
+
+        DocxRenderData segmentPicture = new DocxRenderData(new File(pathRoot+"/segmentPicture3.docx"), segmentPictureDataList );
+        data.setSegmentPicture(segmentPicture);
+
+        //问题单
+        List<SegmentProblemData> segmentProblemDataList = new ArrayList<>();
+        for(int i=0; i<3; i++){
+            SegmentProblemData s20 = new SegmentProblemData();
+            Style wugouStyle = new Style();
+            wugouStyle.setFontSize(10);
+            TextRenderData textRenderDataWuGou = new TextRenderData("□");
+            textRenderDataWuGou.setStyle(wugouStyle);
+            Style gouStyle = new Style();
+            gouStyle.setFontSize(8);
+            TextRenderData textRenderDataGou = new TextRenderData("☑");
+            textRenderDataGou.setStyle(gouStyle);
+            s20.setError1(textRenderDataGou);
+            s20.setError2(textRenderDataWuGou);
+            s20.setError3(textRenderDataWuGou);
+            s20.setError4(textRenderDataWuGou);
+            s20.setLevel1(textRenderDataWuGou);
+            s20.setLevel2(textRenderDataWuGou);
+            s20.setLevel3(textRenderDataWuGou);
+
+            s20.setFunction("ASP.READ");
+            s20.setRemark("问题单测试");
+
+            ProblemPropertyData pp = new ProblemPropertyData();
+            RowRenderData good = RowRenderData.build("4", "墙纸");
+            pp.setProperties(Arrays.asList(good, good, good));
+            s20.setProblemProperty(pp);
+            segmentProblemDataList.add(s20);
+        }
+        DocxRenderData segmentProblem = new DocxRenderData(new File(pathRoot+"/segmentProblem.docx"), segmentProblemDataList);
+        data.setSegmentProblem(segmentProblem);
+
+        //渲染输出
+        Configure config = Configure.newBuilder().customPolicy("problem_property", new ProblemTablePolicy()).build();
+        XWPFTemplate template = XWPFTemplate.compile(pathRoot+"/muban4.docx", config).render(data);
+        //XWPFTemplate template = XWPFTemplate.compile(pathRoot+"/segmentProblem.docx", config).render(segmentProblemDataList.get(0));
+        XWPFDocument document = template.getXWPFDocument();
+        generateTOC(document);
 
         FileOutputStream out = new FileOutputStream(pathRoot+"/out_story2.docx");
-        template.write(out);
+        document.write(out);
         out.flush();
         out.close();
-        template.close();
+        //template.close();
+        document.close();
+
+//        FileOutputStream out = new FileOutputStream(pathRoot+"/out_story2.docx");
+//        template.write(out);
+//        out.flush();
+//        out.close();
+//        template.close();
+//        Document spireDocument = new Document(pathRoot+"/out_story2.docx");
+//        //通过域代码添加目录表
+//        TableOfContent toc = new TableOfContent(spireDocument, "{\\o \"1-3\" \\h \\z \\u}");
+//        for(int i=0; i<spireDocument.getSections().getCount(); i++){
+//            for(int j=0; j<spireDocument.getSections().get(i).getParagraphs().getCount(); j++){
+//                Paragraph p = spireDocument.getSections().get(i).getParagraphs().get(j);
+//               if(p.getText().contains("目录")){
+//                   p.appendTOC(1,3);
+//                    break;
+//                }
+//            }
+//        }
+//        //spireDocument.getSections().get(0).getParagraphs().get(0).appendTOC(1,3);
+//        spireDocument.updateTableOfContents();
+//
+//        //保存文档
+//        spireDocument.saveToFile(pathRoot+"/out_story2.docx", FileFormat.Docx_2010);
+    }
+
+    public void generateTOC(XWPFDocument document) throws InvalidFormatException, FileNotFoundException, IOException {
+        String findText = "toc";
+        String replaceText = "";
+        for (XWPFParagraph p : document.getParagraphs()) {
+            for (XWPFRun r : p.getRuns()) {
+                int pos = r.getTextPosition();
+                String text = r.getText(pos);
+                System.out.println(text);
+                if (text != null && text.contains(findText)) {
+                    text = text.replace(findText, replaceText);
+                    r.setText(text, 0);
+                    addField(p, "TOC \\o \"1-3\" \\h \\z \\u");
+//                    addField(p, "TOC \\h");
+                    break;
+                }
+            }
+        }
+    }
+
+    private void addField(XWPFParagraph paragraph, String fieldName) {
+        CTSimpleField ctSimpleField = paragraph.getCTP().addNewFldSimple();
+        ctSimpleField.setInstr(fieldName);
+        ctSimpleField.setDirty(STOnOff.TRUE);
+        ctSimpleField.addNewR().addNewT().setStringValue("<<fieldName>>");
     }
 }
